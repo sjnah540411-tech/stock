@@ -3,79 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>보수적 투자자를 위한 실시간 수급 타이머</title>
+    <title>보수적 투자자를 위한 실시간 수급 타이머 (외국인+연기금)</title>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; }
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; line-height: 1.6; }
         .header { text-align: center; margin-bottom: 30px; }
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
         .card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .stock-name { font-size: 1.2em; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;}
-        .price-info { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .foreigner-buy { color: #d32f2f; font-weight: bold; } /* 빨간색: 매수 우위 */
-        .foreigner-sell { color: #1976d2; font-weight: bold; } /* 파란색: 매도 우위 */
-        .signal-buy { background-color: #ffebee; color: #c62828; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold; }
-        .signal-sell { background-color: #e3f2fd; color: #1565c0; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold; }
-        .signal-hold { background-color: #f5f5f5; color: #616161; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold; }
-        .settings { background: #e0f7fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .stock-name { font-size: 1.3em; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 8px;}
+        .price-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; }
+        .buy-color { color: #d32f2f; font-weight: bold; } /* 빨간색: 매수 우위 */
+        .sell-color { color: #1976d2; font-weight: bold; } /* 파란색: 매도 우위 */
+        
+        /* 시그널 버튼 색상 */
+        .signal-sell { background-color: #ffebee; color: #c62828; padding: 12px; text-align: center; border-radius: 5px; font-weight: bold; margin-top: 15px; }
+        .signal-strong-buy { background-color: #fff3e0; color: #e65100; padding: 12px; text-align: center; border-radius: 5px; font-weight: bold; margin-top: 15px; border: 2px solid #ffb74d; }
+        .signal-buy { background-color: #e8f5e9; color: #2e7d32; padding: 12px; text-align: center; border-radius: 5px; font-weight: bold; margin-top: 15px; }
+        .signal-hold { background-color: #f5f5f5; color: #616161; padding: 12px; text-align: center; border-radius: 5px; font-weight: bold; margin-top: 15px; }
+        
+        .settings { background: #e0f7fa; padding: 20px; border-radius: 10px; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;}
+        .setting-item { display: flex; align-items: center; gap: 5px; }
+        input[type="number"] { padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h2>📊 대형주 중심 수급 추종 매매 대시보드</h2>
-        <p>목표: 합리적 수익 추구 및 외국인 동조화 전략</p>
+        <h2>📊 대형주 중심 수급 추종 매매 대시보드 (V2. 연기금 추가)</h2>
+        <p>목표: 합리적 수익 추구 및 기관/외국인 쌍끌이 동조화 전략</p>
     </div>
 
     <div class="settings">
         <strong>⚙️ 나의 투자 원칙 설정:</strong> 
-        목표 수익률 <input type="number" id="targetYield" value="5" style="width: 50px;"> % | 
-        외국인 순매수 기준 <input type="number" id="foreignerVol" value="50000" style="width: 80px;"> 주 이상 시 '매수 검토'
+        <div class="setting-item">목표 수익률 <input type="number" id="targetYield" value="5" style="width: 60px;"> %</div>
+        <div class="setting-item">외국인 순매수 기준 <input type="number" id="foreignerVol" value="50000" style="width: 90px;"> 주</div>
+        <div class="setting-item">연기금 순매수 기준 <input type="number" id="npsVol" value="30000" style="width: 90px;"> 주</div>
     </div>
 
     <div class="dashboard" id="stockContainer">
-        </div>
+        <!-- JavaScript를 통해 종목 카드가 여기에 생성됩니다. -->
+    </div>
 
     <script>
-        // 관심 종목 및 가상의 실시간 데이터 (향후 API 연동 필요)
+        // 관심 종목 및 가상의 실시간 데이터 (외국인 + 연기금 데이터 포함)
         const stocks = [
-            { name: "삼성전자", currentPrice: 75000, avgPrice: 72000, foreignerNet: 120000 },
-            { name: "SK하이닉스", currentPrice: 160000, avgPrice: 165000, foreignerNet: -30000 },
-            { name: "현대자동차", currentPrice: 240000, avgPrice: 220000, foreignerNet: 60000 },
-            { name: "LG전자", currentPrice: 95000, avgPrice: 95000, foreignerNet: 15000 },
-            { name: "LG에너지솔루션", currentPrice: 380000, avgPrice: 0, foreignerNet: 80000 }, // 미보유 상태 가정
-            { name: "LG화학", currentPrice: 420000, avgPrice: 400000, foreignerNet: 45000 }
+            { name: "삼성전자", currentPrice: 75000, avgPrice: 72000, foreignerNet: 120000, npsNet: 80000 }, // 보유 중, 목표수익 미달
+            { name: "SK하이닉스", currentPrice: 160000, avgPrice: 150000, foreignerNet: 40000, npsNet: 20000 }, // 보유 중, 목표수익 달성 가정
+            { name: "현대자동차", currentPrice: 240000, avgPrice: 0, foreignerNet: 60000, npsNet: 45000 }, // 미보유, 쌍끌이 매수
+            { name: "LG전자", currentPrice: 95000, avgPrice: 0, foreignerNet: 15000, npsNet: -10000 }, // 미보유, 관망
+            { name: "LG에너지솔루션", currentPrice: 380000, avgPrice: 0, foreignerNet: 80000, npsNet: 5000 }, // 미보유, 외국인만 매수
+            { name: "LG화학", currentPrice: 420000, avgPrice: 0, foreignerNet: -10000, npsNet: 40000 } // 미보유, 연기금만 매수
         ];
 
         function renderDashboard() {
             const container = document.getElementById('stockContainer');
             const targetYield = parseFloat(document.getElementById('targetYield').value);
-            const foreignerVol = parseFloat(document.getElementById('foreignerVol').value);
+            const foreignerThreshold = parseFloat(document.getElementById('foreignerVol').value);
+            const npsThreshold = parseFloat(document.getElementById('npsVol').value);
+            
             container.innerHTML = '';
 
             stocks.forEach(stock => {
                 let currentYield = stock.avgPrice > 0 ? ((stock.currentPrice - stock.avgPrice) / stock.avgPrice * 100).toFixed(2) : 0;
                 let signalHtml = '';
-                let foreignerClass = stock.foreignerNet > 0 ? 'foreigner-buy' : 'foreigner-sell';
+                
+                let foreignerClass = stock.foreignerNet > 0 ? 'buy-color' : 'sell-color';
+                let npsClass = stock.npsNet > 0 ? 'buy-color' : 'sell-color';
+
+                let isForeignerBuying = stock.foreignerNet >= foreignerThreshold;
+                let isNpsBuying = stock.npsNet >= npsThreshold;
                 
                 // 의사결정 로직 구현 (무릎에 사서 어깨에 판다)
-                if (stock.avgPrice > 0 && currentYield >= targetYield) {
-                    signalHtml = `<div class="signal-sell">🔥 목표수익 달성! 즉시 매도 (어깨)</div>`;
-                } else if (stock.avgPrice === 0 && stock.foreignerNet >= foreignerVol) {
-                    signalHtml = `<div class="signal-buy">💡 외국인 수급 포착! 매수 진입 (무릎)</div>`;
+                if (stock.avgPrice > 0) {
+                    // 이미 보유 중인 경우: 목표 수익률 도달 여부만 체크 (어깨에 판다)
+                    if (currentYield >= targetYield) {
+                        signalHtml = `<div class="signal-sell">🔥 목표수익(${targetYield}%) 달성! 기계적 매도 (어깨)</div>`;
+                    } else {
+                        signalHtml = `<div class="signal-hold">⏳ 보유 중 (현재수익: ${currentYield}%)</div>`;
+                    }
                 } else {
-                    signalHtml = `<div class="signal-hold">⏳ 관망 (Hold)</div>`;
+                    // 미보유 상태인 경우: 진입 타이밍 체크 (무릎에 산다)
+                    if (isForeignerBuying && isNpsBuying) {
+                        signalHtml = `<div class="signal-strong-buy">💎 강력 매수 (외국인+연기금 쌍끌이)</div>`;
+                    } else if (isForeignerBuying || isNpsBuying) {
+                        signalHtml = `<div class="signal-buy">💡 매수 검토 (단일 주체 매수 포착)</div>`;
+                    } else {
+                        signalHtml = `<div class="signal-hold">👀 관망 (수급 부족)</div>`;
+                    }
                 }
 
                 const card = `
                     <div class="card">
                         <div class="stock-name">${stock.name}</div>
                         <div class="price-info">
-                            <span>현재가: ${stock.currentPrice.toLocaleString()}원</span>
+                            <span>현재가: <strong>${stock.currentPrice.toLocaleString()}원</strong></span>
                             <span>매수단가: ${stock.avgPrice > 0 ? stock.avgPrice.toLocaleString() + '원' : '미보유'}</span>
                         </div>
+                        <div style="border-top: 1px dashed #ddd; margin: 10px 0;"></div>
                         <div class="price-info">
-                            <span>현재 수익률: <strong>${stock.avgPrice > 0 ? currentYield + '%' : '-'}</strong></span>
-                            <span class="${foreignerClass}">외국인: ${stock.foreignerNet > 0 ? '+' : ''}${stock.foreignerNet.toLocaleString()}주</span>
+                            <span>외국인 수급:</span>
+                            <span class="${foreignerClass}">${stock.foreignerNet > 0 ? '+' : ''}${stock.foreignerNet.toLocaleString()}주</span>
+                        </div>
+                        <div class="price-info">
+                            <span>연기금 수급:</span>
+                            <span class="${npsClass}">${stock.npsNet > 0 ? '+' : ''}${stock.npsNet.toLocaleString()}주</span>
                         </div>
                         ${signalHtml}
                     </div>
@@ -84,10 +114,11 @@
             });
         }
 
-        // 초기 렌더링 및 설정 변경 시 업데이트
+        // 초기 렌더링 및 설정 변경 시 즉각 업데이트 이벤트 연결
         renderDashboard();
-        document.getElementById('targetYield').addEventListener('change', renderDashboard);
-        document.getElementById('foreignerVol').addEventListener('change', renderDashboard);
+        document.getElementById('targetYield').addEventListener('input', renderDashboard);
+        document.getElementById('foreignerVol').addEventListener('input', renderDashboard);
+        document.getElementById('npsVol').addEventListener('input', renderDashboard);
     </script>
 </body>
 </html>
